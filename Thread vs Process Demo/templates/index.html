@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Thread vs Process Demo</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        form, button {
+            margin-bottom: 20px;
+        }
+
+        form label {
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .result {
+            margin-top: 30px;
+        }
+
+        .result h2 {
+            color: #2ecc71;
+        }
+
+        .result ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .result li {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        canvas {
+            margin-top: 20px;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+        }
+
+        .action-buttons button {
+            padding: 10px 20px;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .action-buttons button:hover {
+            background-color: #d35400;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px;
+                font-size: 18px;
+            }
+
+            .action-buttons button {
+                width: 100%;
+                padding: 12px;
+                font-size: 18px;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Thread vs Process Demo (Flask)</h1>
+
+    <div class="container">
+        <form method="POST">
+            <label>Choose Method:</label><br>
+            <input type="radio" name="method" value="thread" required> Thread
+            <input type="radio" name="method" value="process"> Process
+            <br><br>
+
+            <label>Choose Task:</label><br>
+            <input type="radio" name="task" value="cpu" required> CPU-Bound
+            <input type="radio" name="task" value="io"> IO-Bound
+            <br><br>
+
+            <button type="submit">Run Task</button>
+        </form>
+
+        <div class="action-buttons">
+            <button onclick="memorySharing()">Memory Sharing Test</button>
+            <button onclick="ipcTest()">IPC Demo</button>
+        </div>
+
+        {% if result %}
+        <div class="result">
+            <h2>Results:</h2>
+            <ul>
+                <li><strong>Method:</strong> {{ result.method }}</li>
+                <li><strong>Task Type:</strong> {{ result.task }}</li>
+                <li><strong>Time Taken:</strong> {{ result.time }}</li>
+                <li><strong>CPU Usage:</strong> {{ result.cpu }}</li>
+                <li><strong>Memory Usage:</strong> {{ result.mem }}</li>
+                <li><strong>Active Threads:</strong> {{ result.threads }}</li>
+                <li><strong>Active Processes:</strong> {{ result.processes }}</li>
+            </ul>
+
+            <canvas id="cpuChart" width="400" height="200"></canvas>
+        </div>
+
+        <script>
+            const ctx = document.getElementById('cpuChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['CPU Usage (%)', 'Memory Usage (MB)'],
+                    datasets: [{
+                        label: 'System Stats',
+                        data: [
+                            parseFloat("{{ result.cpu.replace('%','') }}"),
+                            parseFloat("{{ result.mem.replace('MB','') }}")
+                        ],
+                        backgroundColor: ['#3498db', '#2ecc71']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        </script>
+        {% endif %}
+
+        <script>
+            function memorySharing() {
+                fetch('/memory_sharing')
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("Thread Counter: " + data["Thread Counter Result"] + "\nProcess Shared Value: " + data["Process Shared Value Result"]);
+                    });
+            }
+
+            function ipcTest() {
+                fetch('/ipc')
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("IPC Message Received: " + data["Received Message"]);
+                    });
+            }
+        </script>
+    </div>
+
+</body>
+</html>
